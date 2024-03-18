@@ -1,0 +1,5 @@
+.env
+hass
+node-red
+mosquitto
+store

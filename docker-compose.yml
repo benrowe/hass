@@ -1,0 +1,58 @@
+version: '3'
+services:
+  homeassistant:
+    container_name: homeassistant
+    image: homeassistant/home-assistant:2024.3
+    volumes:
+      - ./hass/config:/config
+      - ./hass/media:/media-local
+      - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Australia/Sydney
+  mosquitto:
+    container_name: mosquitto
+    image: "eclipse-mosquitto:1.6"
+    restart: unless-stopped
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+    ports:
+      - 1883:1883
+  node-red:
+    image: nodered/node-red
+    container_name: node-red
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ}
+      - PUID=${PUID}
+      - PGID=${PGID}
+    ports:
+      - 1880:1880
+    volumes:
+      - ./node-red/:/data/
+  zwavejsmqtt:
+    container_name: zwavejs2mqtt
+    image: zwavejs/zwavejs2mqtt:latest
+    restart: always
+    volumes:
+      - ./store:/usr/src/app/store
+    expose: 
+      - 8091
+      - 3001
+    ports:
+      - 8091:8091
+      - 3001:3001
+    devices:
+      - ${ZWAVEJS2MQTT_DEVICE_PATH}:/dev/zwave
+    environment:
+      - SESSION_SECRET=${ZWAVEJS2MQTT_SECRET}
+      - ZWAVEJS_EXTERNAL_CONFIG=/usr/src/app/store/.config-db
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
